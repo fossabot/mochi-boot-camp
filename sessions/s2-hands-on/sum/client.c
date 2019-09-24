@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     sum_in_t args;
     for(i=0; i<4; i++) {
         args.x = 42+i*2;
-        args.y = 42+i*2+1;
+        args.str = "client";
 
         hg_handle_t h;
         margo_create(mid, svr_addr, sum_rpc_id, &h);
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
         sum_out_t resp;
         margo_get_output(h, &resp);
 
-        printf("Got response: %d+%d = %d\n", args.x, args.y, resp.ret);
+        printf("Got response: (%d, %s) => %d\n", args.x, args.str, resp.ret);
 
         margo_free_output(h,&resp);
         margo_destroy(h);

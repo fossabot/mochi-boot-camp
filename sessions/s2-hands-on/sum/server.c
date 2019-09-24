@@ -52,8 +52,8 @@ static void sum(hg_handle_t h)
     ret = margo_get_input(h, &in);
     assert(ret == HG_SUCCESS);
 
-    out.ret = in.x + in.y;
-    printf("Computed %d + %d = %d\n",in.x,in.y,out.ret);
+    out.ret = in.x;
+    printf("Send from client (%d, %s) => %d\n",in.x,in.str,out.ret);
 
     ret = margo_respond(h, &out);
     assert(ret == HG_SUCCESS);
