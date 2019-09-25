@@ -10,10 +10,11 @@ client: client.o
 	$(CC) client.o -o client  $(LDFLAGS)
 
 server.o: server.c types.h
-	$(CC) $(CFLAGS) -c server.c
+	$(CC) $(CFLAGS) -I/home/shuuji3/hack-kyoto-mochi/include -c server.c
 
 server: server.o
-	$(CC) server.o -o server  $(LDFLAGS)
+	$(CC) server.o -o server  $(LDFLAGS) -L/home/shuuji3/hack-kyoto-mochi/lib -lkyotocabinet
+#	$(CC) server.o -o server  $(LDFLAGS) -I/home/shuuji3/hack-kyoto-mochi/include -L/home/shuuji3/hack-kyoto-mochi/lib -lkyotocabinet -lz -lstdc++ -lrt -lpthread -lm -lc
 
 clean::
 	rm -f client server client.o server.o
