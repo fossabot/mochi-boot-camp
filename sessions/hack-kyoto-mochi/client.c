@@ -5,8 +5,8 @@
 
 int main(int argc, char** argv)
 {
-  if(argc != 2) {
-    fprintf(stderr,"Usage: %s <server address>\n", argv[0]);
+  if(argc != 4) {
+    fprintf(stderr,"Usage: %s <server address> <key> <value>\n", argv[0]);
     exit(0);
   }
 
@@ -20,8 +20,8 @@ int main(int argc, char** argv)
 
   // Call "set" RPC
   set_in_t set_args;
-  set_args.key = "kyoto";
-  set_args.value = "mochi";
+  set_args.key = argv[2];
+  set_args.value = argv[3];
 
   hg_handle_t h;
   margo_create(mid, svr_addr, set_rpc_id, &h);
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 
   // Call "get" RPC
   get_in_t get_args;
-  get_args.key = "kyoto";
+  get_args.key = argv[2];
 
   margo_create(mid, svr_addr, get_rpc_id, &h);
   margo_forward(h, &get_args);
