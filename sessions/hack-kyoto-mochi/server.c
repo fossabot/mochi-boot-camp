@@ -6,32 +6,7 @@
 #include "types.h"
 #include "kclangc.h"
 
-//// kyoto cabinet
-
-/* call back function for an existing record */
-const char* visitfull(const char* kbuf, size_t ksiz,
-                      const char* vbuf, size_t vsiz, size_t *sp, void* opq) {
-  printf("** visitfull() callback\n");
-  fwrite(kbuf, 1, ksiz, stdout);
-  printf(":");
-  fwrite(vbuf, 1, vsiz, stdout);
-  printf("\n");
-  return KCVISNOP;
-}
-
-/* call back function for an empty record space */
-const char* visitempty(const char* kbuf, size_t ksiz, size_t *sp, void* opq) {
-  printf("** visitempty() callback\n");
-  fwrite(kbuf, 1, ksiz, stdout);
-  printf(" is missing\n");
-  return KCVISNOP;
-}
-
-//// END kyoto cabinet
-
 typedef struct {
-  int max_rpcs;
-  int num_rpcs;
   KCDB* db;
 } server_data;
 
@@ -44,54 +19,8 @@ DECLARE_MARGO_RPC_HANDLER(get)
 int main(int argc, char** argv)
 {
 
-  //// kyoto cabinet
-
-  KCDB* db;
-  KCCUR* cur;
-  char *kbuf, *vbuf;
-  size_t ksiz, vsiz;
-  const char *cvbuf;
-
-  /*
-
-  /* retrieve a record 
-  printf("* retrieve 'foo'\n");
-  vbuf = kcdbget(db, "foo", 3, &vsiz);
-  if (vbuf) {
-    printf("%s\n", vbuf);
-    kcfree(vbuf);
-  } else {
-    fprintf(stderr, "get error: %s\n", kcecodename(kcdbecode(db)));
-  }
-
-  /* traverse records 
-  printf("* traverse\n");
-  cur = kcdbcursor(db);
-  kccurjump(cur);
-  while ((kbuf = kccurget(cur, &ksiz, &cvbuf, &vsiz, 1)) != NULL) {
-    printf("%s:%s\n", kbuf, cvbuf);
-    kcfree(kbuf);
-  }
-  kccurdel(cur);
-
-  /* retrieve a record with visitor 
-  printf("* retrieve one record with visitor\n");
-  if (!kcdbaccept(db, "foo", 3, visitfull, visitempty, NULL, 0) ||
-      !kcdbaccept(db, "dummy", 5, visitfull, visitempty, NULL, 0)) {
-    fprintf(stderr, "accept error: %s\n", kcecodename(kcdbecode(db)));
-  }
-
-  /* traverse records with visitor 
-  printf("* retrieve records with visitor\n");
-  if (!kcdbiterate(db, visitfull, NULL, 0)) {
-    fprintf(stderr, "iterate error: %s\n", kcecodename(kcdbecode(db)));
-  }
-
-  */
-
-  //// END kyoto cabinet
-
   /* create the database object */
+  KCDB* db;
   db = kcdbnew();
 
   /* open the database */
@@ -103,8 +32,6 @@ int main(int argc, char** argv)
   assert(mid);
 
   server_data svr_data = {
-    .max_rpcs = 4,
-    .num_rpcs = 0,
     .db = db
   };
 
@@ -120,7 +47,7 @@ int main(int argc, char** argv)
   margo_register_data(mid, set_rpc_id, &svr_data, NULL);
 
   hg_id_t get_rpc_id = MARGO_REGISTER(mid, "get", get_in_t, get_out_t, get);
-  margo_register_data(mid, set_rpc_id, &svr_data, NULL);
+  margo_register_data(mid, get_rpc_id, &svr_data, NULL);
 
   printf("before margo_wait_for_finalize");
   margo_wait_for_finalize(mid);
@@ -162,20 +89,6 @@ static void set(hg_handle_t h)
   out.ret = strlen(in.key) + strlen(in.value);
   printf("[set] (%s, %s) => %d\n", in.key, in.value, out.ret);
 
-  /// check input
-  char *kbuf, *vbuf;
-  size_t ksiz, vsiz;
-
-  printf("[set] retrieve 'kyoto'\n");
-  vbuf = kcdbget(svr_data->db, "kyoto", 5, &vsiz);
-  if (vbuf) {
-    printf("[set] %s\n", vbuf);
-    kcfree(vbuf);
-  } else {
-    fprintf(stderr, "[set] get error: %s\n", kcecodename(kcdbecode(svr_data->db)));
-  }
-  /// END
-
   ret = margo_respond(h, &out);
   assert(ret == HG_SUCCESS);
 
@@ -184,11 +97,6 @@ static void set(hg_handle_t h)
 
   ret = margo_destroy(h);
   assert(ret == HG_SUCCESS);
-
-  svr_data->num_rpcs += 1;
-  if(svr_data->num_rpcs == svr_data->max_rpcs) {
-    margo_finalize(mid);
-  }
 }
 DEFINE_MARGO_RPC_HANDLER(set)
 
@@ -208,36 +116,15 @@ static void get(hg_handle_t h)
   ret = margo_get_input(h, &in);
   assert(ret == HG_SUCCESS);
 
-  /// check input
   char *kbuf, *vbuf;
   size_t ksiz, vsiz;
 
   printf("[get] retrieve 'kyoto'\n");
-  vbuf = kcdbget(svr_data->db, "kyoto", 5, &vsiz);
-  if (vbuf) {
-    printf("[get] %s\n", vbuf);
-    kcfree(vbuf);
-  } else {
+  out.value = kcdbget(svr_data->db, "kyoto", 5, &vsiz);
+  printf("[get] (%s) => %s\n", in.key, out.value);
+  if (!out.value) {
     fprintf(stderr, "[get] get error: %s\n", kcecodename(kcdbecode(svr_data->db)));
   }
-  /// END
-
-  /* get a record 
-  char *vbuf;
-  size_t vsiz;
-
-  printf("[get] get a record\n");
-  vbuf = kcdbget(svr_data->db, in.key, strlen(in.key), &vsiz);
-  printf("[get] END get a record\n");
-  if (vbuf) {
-    printf("[get] kcdbget: %s\n", vbuf);
-  } else {
-    fprintf(stderr, "[get] get error: %s\n", kcecodename(kcdbecode(svr_data->db)));
-  }
-  */
-
-  out.value = vbuf;
-  printf("[get] get record (%s) => %s\n", in.key, out.value);
 
   ret = margo_respond(h, &out);
   assert(ret == HG_SUCCESS);
@@ -247,11 +134,6 @@ static void get(hg_handle_t h)
 
   ret = margo_destroy(h);
   assert(ret == HG_SUCCESS);
-
-  svr_data->num_rpcs += 1;
-  if(svr_data->num_rpcs == svr_data->max_rpcs) {
-    margo_finalize(mid);
-  }
 
   kcfree(vbuf);
 }
