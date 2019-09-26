@@ -119,8 +119,7 @@ static void get(hg_handle_t h)
   char *kbuf, *vbuf;
   size_t ksiz, vsiz;
 
-  printf("[get] retrieve 'kyoto'\n");
-  out.value = kcdbget(svr_data->db, "kyoto", 5, &vsiz);
+  out.value = kcdbget(svr_data->db, in.key, strlen(in.key), &vsiz);
   printf("[get] (%s) => %s\n", in.key, out.value);
   if (!out.value) {
     fprintf(stderr, "[get] get error: %s\n", kcecodename(kcdbecode(svr_data->db)));
