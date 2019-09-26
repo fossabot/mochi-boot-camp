@@ -16,6 +16,9 @@ DECLARE_MARGO_RPC_HANDLER(set)
 static void get(hg_handle_t h);
 DECLARE_MARGO_RPC_HANDLER(get)
 
+static void rm(hg_handle_t h);
+DECLARE_MARGO_RPC_HANDLER(rm)
+
 int main(int argc, char** argv)
 {
 
@@ -49,9 +52,10 @@ int main(int argc, char** argv)
   hg_id_t get_rpc_id = MARGO_REGISTER(mid, "get", get_in_t, get_out_t, get);
   margo_register_data(mid, get_rpc_id, &svr_data, NULL);
 
-  printf("before margo_wait_for_finalize");
+  hg_id_t rm_rpc_id = MARGO_REGISTER(mid, "rm", rm_in_t, rm_out_t, rm);
+  margo_register_data(mid, rm_rpc_id, &svr_data, NULL);
+
   margo_wait_for_finalize(mid);
-  printf("after margo_wait_for_finalize");
 
   /* close the database */
   printf("[main] close the database\n");
@@ -137,3 +141,41 @@ static void get(hg_handle_t h)
   kcfree(vbuf);
 }
 DEFINE_MARGO_RPC_HANDLER(get)
+
+static void rm(hg_handle_t h)
+{
+  printf("[rm] rm() RPC hander\n");
+  hg_return_t ret;
+
+  rm_in_t in;
+  rm_out_t out;
+
+  margo_instance_id mid = margo_hg_handle_get_instance(h);
+
+  const struct hg_info* info = margo_get_info(h);
+  server_data* svr_data = (server_data*)margo_registered_data(mid, info->id);
+
+  ret = margo_get_input(h, &in);
+  assert(ret == HG_SUCCESS);
+
+  char *kbuf, *vbuf;
+  size_t ksiz, vsiz;
+
+  out.value = kcdbremove(svr_data->db, in.key, strlen(in.key));
+  printf("[rm] (%s) => %d\n", in.key, out.value);
+  if (!out.value) {
+    fprintf(stderr, "[rm] get error: %s\n", kcecodename(kcdbecode(svr_data->db)));
+  }
+
+  ret = margo_respond(h, &out);
+  assert(ret == HG_SUCCESS);
+
+  ret = margo_free_input(h, &in);
+  assert(ret == HG_SUCCESS);
+
+  ret = margo_destroy(h);
+  assert(ret == HG_SUCCESS);
+
+  kcfree(vbuf);
+}
+DEFINE_MARGO_RPC_HANDLER(rm)

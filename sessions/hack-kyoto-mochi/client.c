@@ -7,7 +7,9 @@ int main(int argc, char** argv)
 {
   if(argc != 5) {
     fprintf(stderr,"Usage: %s <server address> <rpc_id> <key> <value>\n\n", argv[0]);
-    fprintf(stderr,"    rpc_id: 1 = set, 2 = get\n");
+    fprintf(stderr,"\trpc_id: 1 = set\n");
+    fprintf(stderr,"\trpc_id: 2 = get\n");
+    fprintf(stderr,"\trpc_id: 3 = remove\n");
     exit(0);
   }
 
@@ -15,6 +17,7 @@ int main(int argc, char** argv)
 
   hg_id_t set_rpc_id = MARGO_REGISTER(mid, "set", set_in_t, set_out_t, NULL);
   hg_id_t get_rpc_id = MARGO_REGISTER(mid, "get", get_in_t, get_out_t, NULL);
+  hg_id_t rm_rpc_id = MARGO_REGISTER(mid, "rm", rm_in_t, rm_out_t, NULL);
 
   hg_addr_t svr_addr;
   margo_addr_lookup(mid, argv[1], &svr_addr);
@@ -23,11 +26,12 @@ int main(int argc, char** argv)
   set_out_t set_resp;
   get_in_t get_args;
   get_out_t get_resp;
+  rm_in_t rm_args;
+  rm_out_t rm_resp;
 
   int rpc_id = atoi(argv[2]);
   switch (rpc_id) {
-  case 1:
-    // Call "set" RPC
+  case 1: // Call "set" RPC
     set_args.key = argv[3];
     set_args.value = argv[4];
     
@@ -43,8 +47,7 @@ int main(int argc, char** argv)
 
     break;
 
-  case 2:
-    // Call "get" RPC
+  case 2: // Call "get" RPC
     get_args.key = argv[3];
 
     margo_create(mid, svr_addr, get_rpc_id, &h);
@@ -54,7 +57,21 @@ int main(int argc, char** argv)
     printf("[get] Got response: %s => %s\n", get_args.key, get_resp.value);
 
     margo_free_output(h, &get_resp);
-    margo_destroy(h);    
+    margo_destroy(h);
+
+    break;
+
+  case 3: // Call "rm" RPC
+    rm_args.key = argv[3];
+
+    margo_create(mid, svr_addr, rm_rpc_id, &h);
+    margo_forward(h, &rm_args);
+    margo_get_output(h, &rm_resp);
+
+    printf("[rm] Got response: %s => %d\n", rm_args.key, rm_resp.value);
+
+    margo_free_output(h, &rm_resp);
+    margo_destroy(h);
 
     break;
 

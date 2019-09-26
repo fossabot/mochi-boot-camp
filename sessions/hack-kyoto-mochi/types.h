@@ -20,4 +20,9 @@ MERCURY_GEN_PROC(get_in_t,
 
 MERCURY_GEN_PROC(get_out_t, ((hg_string_t)(value)))
 
+MERCURY_GEN_PROC(rm_in_t,
+		 ((hg_const_string_t)(key)))
+
+MERCURY_GEN_PROC(rm_out_t, ((int32_t)(value)))
+
 #endif
