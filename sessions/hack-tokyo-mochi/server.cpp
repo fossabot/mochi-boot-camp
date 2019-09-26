@@ -1,18 +1,34 @@
 #include <iostream>
+#include <string>
+
 #include <thallium.hpp>
+#include <thallium/serialization/stl/string.hpp>
 
 namespace tl = thallium;
 
-void sum(const tl::request& req, int x, int y) {
-  std::cout << "Computing " << x << "+" << y << std::endl;
-  req.respond(x+y);
+void set(const tl::request& req, std::string& key, std::string& value) {
+  std::cout << "[set] " << key << " => " << value << std::endl;
+  req.respond((int)(key.size() + value.size()));
+}
+
+void get(const tl::request& req, std::string& key) {
+  std::cout << "[get] " << key << std::endl;
+  req.respond(key);
+}
+
+void remove(const tl::request& req, std::string& key) {
+  std::cout << "[remove] " << key << std::endl;
+  req.respond(key);
 }
 
 int main(int argc, char** argv) {
 
   tl::engine myEngine("na+sm", THALLIUM_SERVER_MODE);
   std::cout << "Server running at address " << myEngine.self() << std::endl;
-  myEngine.define("sum", sum);
+
+  myEngine.define("set", set);
+  myEngine.define("get", get);
+  myEngine.define("remove", remove);
 
   return 0;
 }
