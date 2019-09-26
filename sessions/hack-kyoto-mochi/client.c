@@ -5,8 +5,9 @@
 
 int main(int argc, char** argv)
 {
-  if(argc != 4) {
-    fprintf(stderr,"Usage: %s <server address> <key> <value>\n", argv[0]);
+  if(argc != 5) {
+    fprintf(stderr,"Usage: %s <server address> <rpc_id> <key> <value>\n\n", argv[0]);
+    fprintf(stderr,"    rpc_id: 1 = set, 2 = get\n");
     exit(0);
   }
 
@@ -18,41 +19,52 @@ int main(int argc, char** argv)
   hg_addr_t svr_addr;
   margo_addr_lookup(mid, argv[1], &svr_addr);
 
-  // Call "set" RPC
   set_in_t set_args;
-  set_args.key = argv[2];
-  set_args.value = argv[3];
-
-  hg_handle_t h;
-  margo_create(mid, svr_addr, set_rpc_id, &h);
-  margo_forward(h, &set_args);
-
-  set_out_t resp;
-  margo_get_output(h, &resp);
-
-  printf("[set] Get response: (%s, %s) => %d\n", set_args.key, set_args.value, resp.ret);
-
-  margo_free_output(h,&resp);
-  margo_destroy(h);    
-
-  // Call "get" RPC
+  set_out_t set_resp;
   get_in_t get_args;
-  get_args.key = argv[2];
-
-  margo_create(mid, svr_addr, get_rpc_id, &h);
-  margo_forward(h, &get_args);
-
   get_out_t get_resp;
-  margo_get_output(h, &get_resp);
 
-  printf("[get] Got response: %s => %s\n", get_args.key, get_resp.value);
+  int rpc_id = atoi(argv[2]);
+  switch (rpc_id) {
+  case 1:
+    // Call "set" RPC
+    set_args.key = argv[3];
+    set_args.value = argv[4];
+    
+    hg_handle_t h;
+    margo_create(mid, svr_addr, set_rpc_id, &h);
+    margo_forward(h, &set_args);
+    margo_get_output(h, &set_resp);
 
-  margo_free_output(h, &get_resp);
-  margo_destroy(h);    
+    printf("[set] Get response: (%s, %s) => %d\n", set_args.key, set_args.value, set_resp.ret);
+
+    margo_free_output(h, &set_resp);
+    margo_destroy(h);
+
+    break;
+
+  case 2:
+    // Call "get" RPC
+    get_args.key = argv[3];
+
+    margo_create(mid, svr_addr, get_rpc_id, &h);
+    margo_forward(h, &get_args);
+    margo_get_output(h, &get_resp);
+
+    printf("[get] Got response: %s => %s\n", get_args.key, get_resp.value);
+
+    margo_free_output(h, &get_resp);
+    margo_destroy(h);    
+
+    break;
+
+  default:
+    printf("unknown rpc name");
+    break;
+  }
 
   // destroy margo client
   margo_addr_free(mid, svr_addr);
-
   margo_finalize(mid);
 
   return 0;
