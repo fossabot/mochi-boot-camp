@@ -1,4 +1,6 @@
 # Mochi Boot Camp
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fshuuji3%2Fmochi-boot-camp.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fshuuji3%2Fmochi-boot-camp?ref=badge_shield)
+
 
 Welcome to the 2019 Mochi Boot Camp!
 
@@ -68,3 +70,7 @@ also contains source code for all the examples.
 * [Session 6: Miscellaneous](sessions/s6-misc/README.md)
   * [presentation: networks and RPC tuning](sessions/s6-misc/mbc-s6-fabrics-and-rpcs.pdf)
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fshuuji3%2Fmochi-boot-camp.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fshuuji3%2Fmochi-boot-camp?ref=badge_large)
